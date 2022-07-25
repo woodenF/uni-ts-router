@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperties(exports, { __esModule: { value: true }, [Symbol.toStringTag]: { value: "Module" } });
 var common_vendor = require("./common/vendor.js");
+var router_index = require("./router/index.js");
+require("./router/router.js");
 if (!Math) {
   "./pages/index/index.js";
   "./pages/test/index.js";
@@ -23,7 +25,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
 });
 var App = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "D:/Code/Local/Uniapp/uni-vite-template/src/App.vue"]]);
 function createApp() {
-  const app = common_vendor.createSSRApp(App);
+  const app = common_vendor.createSSRApp(App).use(router_index.router);
   return {
     app
   };

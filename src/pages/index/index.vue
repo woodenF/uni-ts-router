@@ -9,36 +9,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Router from '../../router/router';
+import { useRouter } from '../../hooks/useRouter';
 const title = ref('Hello')
-const router = new Router({ routes: ROUTES });
-
-router.beforeEach((to, from, next) => {
-  console.log('beforEach1')
-  next();
-})
-router.beforeEach((to, from, next) => {
-  console.log('beforEach2')
-  if(to.name !== 'Logs') {
-    next({ name: 'Logs' });
-  }
-  next()
-})
-router.beforeEach((to, from, next) => {
-  console.log('beforEach3')
-  next();
-})
-router.beforeEach((to, from, next) => {
-  console.log('beforEach4')
-  next();
-})
+const router = useRouter();
 
 function navigate() {
   router.navigateTo({
     name: 'Test',
     query: {
       a: 1,
-      b: 2
+      b: 3
     }
   })
 }

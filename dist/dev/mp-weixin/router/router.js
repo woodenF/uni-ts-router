@@ -89,8 +89,15 @@ const _Router = class {
     }
     return str && `?${str.slice(0, -1)}`;
   }
+  install(app) {
+    app.config.globalProperties.$Router = this;
+  }
 };
 let Router = _Router;
 __publicField(Router, "beforeEachQueue", []);
 __publicField(Router, "routes", []);
-exports.Router = Router;
+function createRouter({ routes }) {
+  const router = new Router({ routes });
+  return router;
+}
+exports.createRouter = createRouter;

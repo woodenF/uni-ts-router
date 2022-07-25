@@ -1,3 +1,5 @@
+import { App, getCurrentInstance } from "vue";
+
 type Options = Omit<UniNamespace.NavigateToOptions, 'url'> & {
   url?: string;
   name?: string;
@@ -14,7 +16,7 @@ interface BeforeEachCallback {
   (to: Route, from: Route, next: (args?: Options) => void): void;
 }
 
-export default class Router {
+class Router {
   static beforeEachQueue: BeforeEachCallback[] = [];
   static routes: any[] = [];
   constructor({ routes }: { routes?: any[] }) {
@@ -106,4 +108,17 @@ export default class Router {
     }
     return str && `?${str.slice(0, -1)}`; 
   }
+  // 提供给 vue.use 使用
+  install(app: App) {
+    app.config.globalProperties.$Router = this;
+  }
+}
+
+function createRouter({ routes }: { routes: any[] }) {
+  const router = new Router({ routes });
+  return router;
+}
+
+export {
+  createRouter
 }

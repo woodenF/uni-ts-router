@@ -5600,6 +5600,7 @@ const onLaunch = /* @__PURE__ */ createHook(ON_LAUNCH);
 exports._export_sfc = _export_sfc;
 exports.createSSRApp = createSSRApp;
 exports.defineComponent = defineComponent;
+exports.getCurrentInstance = getCurrentInstance;
 exports.index = index;
 exports.o = o;
 exports.onHide = onHide;
