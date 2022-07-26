@@ -1,59 +1,94 @@
-import { App, getCurrentInstance } from "vue";
-
-type Options = Omit<UniNamespace.NavigateToOptions, 'url'> & {
-  url?: string;
-  name?: string;
-  query?: Record<string, any>
+import { App, getCurrentInstance, inject } from 'vue';
+const ROUTER_KEY = Symbol('router');
+interface Router {
+  routes?: any[];
+  beforeEach(guard: BeforeGuard): void;
+  navigateTo(options: RouteOptions): void;
+  install(app: App): void;
+}
+interface RouterOptions {
+  routes?: any[]
 }
 
-interface Route {
-  url: string;
+type RouteOptions = Omit<UniNamespace.NavigateToOptions, 'url'> & {
+  url?: string;
   name?: string;
   query?: Record<string, any>;
 }
 
-interface BeforeEachCallback {
-  (to: Route, from: Route, next: (args?: Options) => void): void;
+interface BeforeGuard {
+  (to: any, from: any, next: (options?: RouteOptions | boolean) => void): void
 }
 
-class Router {
-  static beforeEachQueue: BeforeEachCallback[] = [];
-  static routes: any[] = [];
-  constructor({ routes }: { routes?: any[] }) {
-    Router.routes = routes || [];
+export function createRouter(options: RouterOptions) {
+  const { routes } = options;
+  const beforeGuards: BeforeGuard[] = [];
+
+  // 在当前路由中找到对应路由
+  function getRoute(options: RouteOptions) {
+    if(options?.url) {
+      return routes?.find((item) => getPath(item.path) === getPath(options.url || ''));
+    }
+    if(options.name) {
+      return routes?.find((item) => item.name === options.name);
+    }
   }
-  async navigate(type: 'navigateTo', options: Options) {
-    const { to, from } = this.getFromAndTo(options);
-    const query = this.formatQuery(options.query || {});
+
+  // 转换路由路径
+  function getPath(path: string) {
+    if(!path) return '';
+    return path.charAt(0) === '/' ? path : `/${path}`
+  }
+
+  // 处理跳转参数
+  function formatQuery(query: Record<string, any>) {
+    let str = '';
+    for (const key in query) {
+      if (Object.prototype.hasOwnProperty.call(query, key)) {
+        const value = query[key];
+        str += `${key}=${value}&`
+      }
+    }
+    return str && `?${str.slice(0, -1)}`; 
+  } 
+
+  // 跳转页面
+  async function navigate(
+    type: 'navigateTo' | 'redirectTo' | 'switchTab' | 'navigateBack',
+    options: RouteOptions
+  ) {
+    const { to, from } = getToAndFrom(options);
     const params = {
       ...options,
-      url: `${this.getAbsolutePath(to.path)}${query}`,
+      url: `${getPath(to.path)}${formatQuery(options.query || {})}`
     }
-    await this.next({ to, from });
-    return uni[type](params);
-  }
-  navigateTo(options: Options) {
-    return this.navigate('navigateTo', options);
+    await next({ to, from });
+    return uni[type](params as any);
   }
 
-  beforeEach(fn: BeforeEachCallback) {
-    Router.beforeEachQueue.push(fn);
+  function navigateTo(options: RouteOptions) {
+    navigate('navigateTo', options);
   }
 
-  next({ to, from }: { to: Route, from: Route }) {
+
+  function beforeEach(guard: BeforeGuard) {
+    beforeGuards.push(guard);
+  }
+
+  function next({ to, from }: any) {
     let i = 0;
     return new Promise((resolve, reject) => {
-      const _next: any = (args?: Options) => {
-        if(Object.prototype.toString.call(args) === '[object Object]') {
-          this.navigateTo(args as Options);
+      const _next: any = (options?: RouteOptions | boolean) => {
+        if(options && Object.prototype.toString.call(options) === '[object Object]') {
+          navigateTo(options as RouteOptions);
           return reject('拦截跳转')
         }
-        if(args === false) {
+        if(options === false) {
           return reject('终止跳转')
         }
-        const task = Router.beforeEachQueue[i++];
+        const task = beforeGuards[i++];
         if(!task) {
-          return resolve(true);
+          return resolve(true)
         }
         return new Promise((next) => {
           task(to, from, next);
@@ -63,62 +98,32 @@ class Router {
     })
   }
 
-  // 获取目标路由
-  getTargetRoute(options: Options) {
-    if(options?.url) {
-      return Router.routes.find((item) => this.getAbsolutePath(item.path) === this.getAbsolutePath(options.url || ''));
-    }
-    if(options?.name) {
-      return Router.routes.find((item) => item.name === options.name);
-    }
-    throw '目标路由不存在';
-  }
-
-  getFromAndTo(options: Options) {
-    const currentPages = getCurrentPages();
-    const currentPage = currentPages[currentPages.length - 1];
-    const to = this.getTargetRoute(options);
-    const from = this.getTargetRoute({ url: currentPage.route })
+  // 获取路由跳转目标页面和当前页面
+  function getToAndFrom(options: RouteOptions) {
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    const to = getRoute(options);
+    const from = getRoute({ url: currentPage.route })
     return {
       to: {
         ...to,
         ...options
-      }, from
+      },
+      from
     }
   }
 
-  getAbsolutePath(path: string) {
-    if(!path) {
-      return ''
+  const router: Router = {
+    routes: options.routes,
+    navigateTo,
+    beforeEach,
+    install(app) {
+      app.provide(ROUTER_KEY, router)
     }
-    if(path.charAt(0) === '/') {
-      return path;
-    }
-    return `/${path}`
   }
-  
-  // 处理query
-  formatQuery(query: Record<string, any>) {
-    let str = '';
-    for (const key in query) {
-      if (Object.prototype.hasOwnProperty.call(query, key)) {
-        const value = query[key];
-        str += `${key}=${value}&`
-      }
-    }
-    return str && `?${str.slice(0, -1)}`; 
-  }
-  // 提供给 vue.use 使用
-  install(app: App) {
-    app.config.globalProperties.$Router = this;
-  }
-}
-
-function createRouter({ routes }: { routes: any[] }) {
-  const router = new Router({ routes });
   return router;
 }
 
-export {
-  createRouter
+export function useRouter() {
+  return inject(ROUTER_KEY) as Router;
 }

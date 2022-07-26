@@ -9,17 +9,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from '../../hooks/useRouter';
+import { useRouter } from '../../router/router';
 const title = ref('Hello')
 const router = useRouter();
 
+console.log('2123131', useRouter())
 function navigate() {
   router.navigateTo({
-    name: 'Test',
-    query: {
-      a: 1,
-      b: 3
-    }
+    name: 'Test'
   })
 }
 

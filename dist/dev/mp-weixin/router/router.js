@@ -1,85 +1,23 @@
 "use strict";
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => {
-  __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-  return value;
-};
 var common_vendor = require("../common/vendor.js");
-const _Router = class {
-  constructor({ routes }) {
-    _Router.routes = routes || [];
-  }
-  async navigate(type, options) {
-    const { to, from } = this.getFromAndTo(options);
-    const query = this.formatQuery(options.query || {});
-    const params = {
-      ...options,
-      url: `${this.getAbsolutePath(to.path)}${query}`
-    };
-    await this.next({ to, from });
-    return common_vendor.index[type](params);
-  }
-  navigateTo(options) {
-    return this.navigate("navigateTo", options);
-  }
-  beforeEach(fn) {
-    _Router.beforeEachQueue.push(fn);
-  }
-  next({ to, from }) {
-    let i = 0;
-    return new Promise((resolve, reject) => {
-      const _next = (args) => {
-        if (Object.prototype.toString.call(args) === "[object Object]") {
-          this.navigateTo(args);
-          return reject("\u62E6\u622A\u8DF3\u8F6C");
-        }
-        if (args === false) {
-          return reject("\u7EC8\u6B62\u8DF3\u8F6C");
-        }
-        const task = _Router.beforeEachQueue[i++];
-        if (!task) {
-          return resolve(true);
-        }
-        return new Promise((next) => {
-          task(to, from, next);
-        }).then(_next).catch(reject);
-      };
-      _next();
-    });
-  }
-  getTargetRoute(options) {
-    if (options == null ? void 0 : options.url) {
-      return _Router.routes.find((item) => this.getAbsolutePath(item.path) === this.getAbsolutePath(options.url || ""));
+const ROUTER_KEY = Symbol("router");
+function createRouter(options) {
+  const { routes } = options;
+  const beforeGuards = [];
+  function getRoute(options2) {
+    if (options2 == null ? void 0 : options2.url) {
+      return routes == null ? void 0 : routes.find((item) => getPath(item.path) === getPath(options2.url || ""));
     }
-    if (options == null ? void 0 : options.name) {
-      return _Router.routes.find((item) => item.name === options.name);
+    if (options2.name) {
+      return routes == null ? void 0 : routes.find((item) => item.name === options2.name);
     }
-    throw "\u76EE\u6807\u8DEF\u7531\u4E0D\u5B58\u5728";
   }
-  getFromAndTo(options) {
-    const currentPages = getCurrentPages();
-    const currentPage = currentPages[currentPages.length - 1];
-    const to = this.getTargetRoute(options);
-    const from = this.getTargetRoute({ url: currentPage.route });
-    return {
-      to: {
-        ...to,
-        ...options
-      },
-      from
-    };
-  }
-  getAbsolutePath(path) {
-    if (!path) {
+  function getPath(path) {
+    if (!path)
       return "";
-    }
-    if (path.charAt(0) === "/") {
-      return path;
-    }
-    return `/${path}`;
+    return path.charAt(0) === "/" ? path : `/${path}`;
   }
-  formatQuery(query) {
+  function formatQuery(query) {
     let str = "";
     for (const key in query) {
       if (Object.prototype.hasOwnProperty.call(query, key)) {
@@ -89,15 +27,68 @@ const _Router = class {
     }
     return str && `?${str.slice(0, -1)}`;
   }
-  install(app) {
-    app.config.globalProperties.$Router = this;
+  async function navigate(type, options2) {
+    const { to, from } = getToAndFrom(options2);
+    const params = {
+      ...options2,
+      url: `${getPath(to.path)}${formatQuery(options2.query || {})}`
+    };
+    await next({ to, from });
+    return common_vendor.index[type](params);
   }
-};
-let Router = _Router;
-__publicField(Router, "beforeEachQueue", []);
-__publicField(Router, "routes", []);
-function createRouter({ routes }) {
-  const router = new Router({ routes });
+  function navigateTo(options2) {
+    navigate("navigateTo", options2);
+  }
+  function beforeEach(guard) {
+    beforeGuards.push(guard);
+  }
+  function next({ to, from }) {
+    let i = 0;
+    return new Promise((resolve, reject) => {
+      const _next = (options2) => {
+        if (options2 && Object.prototype.toString.call(options2) === "[object Object]") {
+          navigateTo(options2);
+          return reject("\u62E6\u622A\u8DF3\u8F6C");
+        }
+        if (options2 === false) {
+          return reject("\u7EC8\u6B62\u8DF3\u8F6C");
+        }
+        const task = beforeGuards[i++];
+        if (!task) {
+          return resolve(true);
+        }
+        return new Promise((next2) => {
+          task(to, from, next2);
+        }).then(_next).catch(reject);
+      };
+      _next();
+    });
+  }
+  function getToAndFrom(options2) {
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    const to = getRoute(options2);
+    const from = getRoute({ url: currentPage.route });
+    return {
+      to: {
+        ...to,
+        ...options2
+      },
+      from
+    };
+  }
+  const router = {
+    routes: options.routes,
+    navigateTo,
+    beforeEach,
+    install(app) {
+      app.provide(ROUTER_KEY, router);
+    }
+  };
   return router;
 }
+function useRouter() {
+  return common_vendor.inject(ROUTER_KEY);
+}
 exports.createRouter = createRouter;
+exports.useRouter = useRouter;

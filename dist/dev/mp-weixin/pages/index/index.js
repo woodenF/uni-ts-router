@@ -1,17 +1,14 @@
 "use strict";
 var common_vendor = require("../../common/vendor.js");
-var hooks_useRouter = require("../../hooks/useRouter.js");
+var router_router = require("../../router/router.js");
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   setup(__props) {
     const title = common_vendor.ref("Hello");
-    const router = hooks_useRouter.useRouter();
+    const router = router_router.useRouter();
+    console.log("2123131", router_router.useRouter());
     function navigate() {
       router.navigateTo({
-        name: "Test",
-        query: {
-          a: 1,
-          b: 3
-        }
+        name: "Test"
       });
     }
     return (_ctx, _cache) => {
@@ -22,5 +19,5 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
   }
 });
-var MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "D:/Code/Local/Uniapp/uni-vite-template/src/pages/index/index.vue"]]);
+var MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "D:/Code/Local/Uniapp/uni-ts-router/src/pages/index/index.vue"]]);
 wx.createPage(MiniProgramPage);
