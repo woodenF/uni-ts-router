@@ -11,7 +11,16 @@ export default defineConfig({
   define: {
     ROUTES: (() => {
       const data = fs.readFileSync(path.resolve(__dirname, './src/pages.json'), 'utf-8');
-      return eval(`(${data})`).pages
+      const pages = eval(`(${data})`).pages;
+      const subPackages = (eval(`(${data})`).subPackages).map((item) => {
+        return item.pages.map((subItem) => {
+          return {
+            ...subItem,
+            path: `${item.root}/${subItem.path}`
+          }
+        })
+      }).flat(2);
+      return [...pages, ...subPackages]
     })()
   }
 });

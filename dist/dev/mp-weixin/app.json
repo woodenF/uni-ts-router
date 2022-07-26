@@ -4,12 +4,19 @@
     "pages/test/index",
     "pages/logs/index"
   ],
+  "subPackages": [
+    {
+      "root": "pagesA",
+      "pages": [
+        "test/index"
+      ]
+    }
+  ],
   "window": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "uni-app",
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8"
   },
-  "usingComponents": {},
-  "sitemapLocation": "sitemap.json"
+  "usingComponents": {}
 }

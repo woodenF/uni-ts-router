@@ -1,4 +1,4 @@
-import { App, getCurrentInstance, inject } from 'vue';
+import { App, inject } from 'vue';
 const ROUTER_KEY = Symbol('router');
 interface Router {
   routes?: any[];

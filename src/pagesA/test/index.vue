@@ -1,24 +1,10 @@
 <template>
   <view class="content">
-    <image class="logo" src="/static/logo.png" />
-    <view class="text-area">
-      <text class="title" @click="navigate">{{ title }}</text>
-    </view>
+    PagesA Test
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from '../../router/router';
-const title = ref('Hello')
-const router = useRouter();
-
-console.log('2123131', useRouter())
-function navigate() {
-  router.navigateTo({
-    name: 'PagesATest'
-  })
-}
 
 </script>
 

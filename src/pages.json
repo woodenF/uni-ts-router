@@ -22,6 +22,15 @@
 			}
 		}
 	],
+	"subPackages": [{
+		"root": "pagesA",
+		"pages": [
+			{
+				"path": "test/index",
+				"name": "PagesATest"
+			}
+		]
+	}],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",

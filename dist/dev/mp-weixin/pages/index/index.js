@@ -8,7 +8,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     console.log("2123131", router_router.useRouter());
     function navigate() {
       router.navigateTo({
-        name: "Test"
+        name: "PagesATest"
       });
     }
     return (_ctx, _cache) => {
